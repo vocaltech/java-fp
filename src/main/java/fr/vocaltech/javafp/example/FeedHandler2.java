@@ -1,6 +1,5 @@
 package fr.vocaltech.javafp.example;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -19,14 +18,19 @@ public class FeedHandler2 {
                 .map(doc -> {
                     try {
                         webservice.create(doc);
-                        updateToProcessed(doc);
-                    } catch(IOException ioexc) {
                         try {
-                            updateToFailed(doc, ioexc);
-                        } catch (IOException ioexc2) {
-                            ioexc2.printStackTrace();
+                            updateToProcessed(doc);
+                        } catch (DocumentDbException e) {
+                            throw new RuntimeException(e);
+                        }
+                    } catch(WebserviceException wsException) {
+                        try {
+                            updateToFailed(doc, wsException);
+                        } catch (DocumentDbException e) {
+                            throw new RuntimeException(e);
                         }
                     }
+
                     return doc;
                 })
                 .collect(Collectors.toList());
@@ -38,13 +42,13 @@ public class FeedHandler2 {
         return doc.getType().equals("IMPORTANT");
     }
 
-    private void updateToProcessed(Doc doc) throws IOException {
+    private void updateToProcessed(Doc doc) throws DocumentDbException {
         doc.setApiId(7);
         doc.setStatus("PROCESSED");
         documentDb.update(doc);
     }
 
-    private void updateToFailed(Doc doc, Exception exc) throws IOException {
+    private void updateToFailed(Doc doc, Exception exc) throws DocumentDbException {
         doc.setStatus("FAILED");
         doc.setError(exc.getMessage());
         documentDb.update(doc);
