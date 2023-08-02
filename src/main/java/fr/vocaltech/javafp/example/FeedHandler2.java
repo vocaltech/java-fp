@@ -18,17 +18,9 @@ public class FeedHandler2 {
                 .map(doc -> {
                     try {
                         webservice.create(doc);
-                        try {
-                            updateToProcessed(doc);
-                        } catch (DocumentDbException e) {
-                            throw new RuntimeException(e);
-                        }
+                        updateToProcessed(doc);
                     } catch(WebserviceException wsException) {
-                        try {
-                            updateToFailed(doc, wsException);
-                        } catch (DocumentDbException e) {
-                            throw new RuntimeException(e);
-                        }
+                        updateToFailed(doc, wsException);
                     }
 
                     return doc;
@@ -42,15 +34,25 @@ public class FeedHandler2 {
         return doc.getType().equals("IMPORTANT");
     }
 
-    private void updateToProcessed(Doc doc) throws DocumentDbException {
+    private void updateToProcessed(Doc doc) {
         doc.setApiId(7);
         doc.setStatus("PROCESSED");
-        documentDb.update(doc);
+
+        try {
+            documentDb.update(doc);
+        } catch (DocumentDbException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    private void updateToFailed(Doc doc, Exception exc) throws DocumentDbException {
+    private void updateToFailed(Doc doc, Exception exc) {
         doc.setStatus("FAILED");
         doc.setError(exc.getMessage());
-        documentDb.update(doc);
+
+        try {
+            documentDb.update(doc);
+        } catch (DocumentDbException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
