@@ -23,7 +23,7 @@ public class FeedHandler3 {
                                 return res;
                             })
                             .orElseGet(() -> {
-                                updateToFailed(doc, new WebserviceException("Error during Webservice creation"));
+                                updateToFailed(doc, new WebserviceException("Error WS"));
                                 return null;
                             });
 
