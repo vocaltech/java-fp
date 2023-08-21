@@ -39,8 +39,8 @@ class FeedHandler0Test {
         Webservice mockedWebservice = mock(Webservice.class);
         DocumentDb mockedDocumentDb = mock(DocumentDb.class);
 
-        when(mockedWebservice.create(new Doc())).thenReturn(true);
-        when(mockedDocumentDb.update(new Doc())).thenReturn(true);
+        when(mockedWebservice.create(any())).thenReturn(true);
+        when(mockedDocumentDb.update(any())).thenReturn(true);
 
         FeedHandler0 feedHandler0 = new FeedHandler0(mockedWebservice, mockedDocumentDb);
 
