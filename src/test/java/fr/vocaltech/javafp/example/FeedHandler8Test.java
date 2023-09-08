@@ -4,12 +4,12 @@ import io.vavr.control.Try;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.platform.commons.util.ReflectionUtils;
 
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.lang.reflect.Field;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -49,18 +49,18 @@ class FeedHandler8Test {
     private Predicate<DocImmutableWith> getPredicateIsImportant() {
         Predicate<DocImmutableWith> predicateIsImportant;
 
-        List<Field> fields = ReflectionUtils.findFields(FeedHandler8.class, field -> field.getName().equals("isImportant"), ReflectionUtils.HierarchyTraversalMode.TOP_DOWN);
-        Field fieldIsImportant = fields.get(0);
-        fieldIsImportant.setAccessible(true);
-
-        org.junit.platform.commons.function.Try<Object> tryField = ReflectionUtils.tryToReadFieldValue(fieldIsImportant);
-
         try {
-             predicateIsImportant = (Predicate<DocImmutableWith>) tryField.get();
-        } catch (Exception e) {
-            throw new RuntimeException();
-        }
+            Field fieldIsImportant = FeedHandler8.class.getDeclaredField("isImportant");
+            fieldIsImportant.setAccessible(true);
 
+            try {
+                predicateIsImportant = (Predicate<DocImmutableWith>)fieldIsImportant.get(null); // static field => null
+            } catch (IllegalAccessException e) {
+                throw new RuntimeException(e);
+            }
+        } catch (NoSuchFieldException e) {
+            throw new RuntimeException(e);
+        }
         return predicateIsImportant;
     }
 
@@ -68,16 +68,17 @@ class FeedHandler8Test {
     private BiFunction<DocImmutableWith, Resource, DocImmutableWith> getBiFunctionSetToProcessed() {
         BiFunction<DocImmutableWith, Resource, DocImmutableWith> biFunctionSetToProcessed;
 
-        List<Field> fields = ReflectionUtils.findFields(FeedHandler8.class, field -> field.getName().equals("setToProcessed"), ReflectionUtils.HierarchyTraversalMode.TOP_DOWN);
-        Field fieldSetToProcessed = fields.get(0);
-        fieldSetToProcessed.setAccessible(true);
-
-        org.junit.platform.commons.function.Try<Object> tryField = ReflectionUtils.tryToReadFieldValue(fieldSetToProcessed);
-
         try {
-            biFunctionSetToProcessed = (BiFunction<DocImmutableWith, Resource, DocImmutableWith>) tryField.get();
-        } catch (Exception e) {
-            throw new RuntimeException();
+            Field fieldSetToProcessed = FeedHandler8.class.getDeclaredField("setToProcessed");
+            fieldSetToProcessed.setAccessible(true);
+
+            try {
+                biFunctionSetToProcessed = (BiFunction<DocImmutableWith, Resource, DocImmutableWith>) fieldSetToProcessed.get(null); // static field => null
+            } catch (IllegalAccessException e) {
+                throw new RuntimeException(e);
+            }
+        } catch (NoSuchFieldException e) {
+            throw new RuntimeException(e);
         }
         return biFunctionSetToProcessed;
     }
