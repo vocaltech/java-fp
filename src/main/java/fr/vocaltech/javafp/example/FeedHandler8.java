@@ -11,8 +11,6 @@ import java.util.stream.Collectors;
 public class FeedHandler8 {
     private Repository repository;
 
-    private DocImmutableWith updatedDoc;
-
     public FeedHandler8(Repository repository) {
         this.repository = repository;
     }
@@ -22,6 +20,12 @@ public class FeedHandler8 {
 
         return changes.stream()
                 .filter(isImportant)
+                .map(doc -> {
+                    return creator.apply(doc)
+                            .peek(resource -> System.out.println("Got resource: " + resource))
+                            .map(resource -> setToProcessed.apply(doc, resource))
+                            .getOrElseGet(t -> setToFailed.apply(doc, t));
+                })
                 .collect(Collectors.toList());
     }
 
@@ -30,4 +34,7 @@ public class FeedHandler8 {
             doc.withStatus("PROCESSED")
                     .withApiId(resource.get("id"));
 
+    private static final BiFunction<DocImmutableWith, Throwable, DocImmutableWith> setToFailed = (doc, e) ->
+            doc.withStatus("FAILED")
+                    .withError(e.getMessage());
 }
