@@ -83,6 +83,26 @@ class FeedHandler8Test {
         return biFunctionSetToProcessed;
     }
 
+    @SuppressWarnings("unchecked")
+    private BiFunction<DocImmutableWith, Throwable, DocImmutableWith> getBiFunctionSetToFailed() {
+        BiFunction<DocImmutableWith, Throwable, DocImmutableWith> biFunctionSetToFailed;
+
+        try {
+            Field fieldSetToFailed = FeedHandler8.class.getDeclaredField("setToFailed");
+            fieldSetToFailed.setAccessible(true);
+
+            try {
+                biFunctionSetToFailed = (BiFunction<DocImmutableWith, Throwable, DocImmutableWith>) fieldSetToFailed.get(null);
+            } catch (IllegalAccessException e) {
+                throw new RuntimeException(e);
+            }
+        } catch (NoSuchFieldException e) {
+            throw new RuntimeException(e);
+        }
+
+        return biFunctionSetToFailed;
+    }
+
     @Test
     void givenDocImportant_whenTestPredicateIsImportant_thenTrue() {
         DocImmutableWith docImportant = new DocImmutableWith("GROOVY", "IMPORTANT", 0, "NEW", null);
@@ -110,8 +130,21 @@ class FeedHandler8Test {
         assertThat(processedDoc.getStatus()).isEqualTo("PROCESSED");
         assertThat(processedDoc.getApiId()).isEqualTo(9);
     }
+
     @Test
-    void givenChanges_whenFilterDocIsImportant_thenOk() {
+    void givenDocWithNewStatus_whenApplySetToFailed_thenOk() {
+        DocImmutableWith docImportant = new DocImmutableWith("GROOVY", "IMPORTANT", 0, "NEW", null);
+
+        BiFunction<DocImmutableWith, Throwable, DocImmutableWith> setToFailed = getBiFunctionSetToFailed();
+        DocImmutableWith failedDoc = setToFailed.apply(docImportant, new WebserviceException("wsExc"));
+
+        assertThat(failedDoc.getApiId()).isEqualTo(0);
+        assertThat(failedDoc.getStatus()).isEqualTo("FAILED");
+        assertThat(failedDoc.getError()).isEqualTo("wsExc");
+
+    }
+    @Test
+    void givenChangesAndCreator_whenFilterDocIsImportant_thenOk() {
         // GIVEN
         Resource resource = new Resource();
         resource.put("id", 9);
@@ -123,5 +156,42 @@ class FeedHandler8Test {
 
         // THEN
         assertThat(processed.get(0).getType()).isEqualTo("IMPORTANT");
+    }
+
+    @Test
+    void givenChangesAndSuccessCreator_whenHandle_thenDocStatusProcessed() {
+        // GIVEN
+        Resource resource = new Resource();
+        resource.put("id", 9);
+        Function<DocImmutableWith, Try<Resource>> creator =
+                doc -> Try.success(resource);
+
+        // WHEN
+        List<DocImmutableWith> processed = feedHandler8.handle(changes, creator);
+
+        // THEN
+        assertThat(processed.get(0).getType()).isEqualTo("IMPORTANT");
+        assertThat(processed.get(0).getApiId()).isEqualTo(9);
+        assertThat(processed.get(0).getStatus()).isEqualTo("PROCESSED");
+
+        System.out.println(processed);
+    }
+
+    @Test
+    void givenChangesAndFailureCreator_whenHandle_thenDocStatusFailed() {
+        // GIVEN
+        Function<DocImmutableWith, Try<Resource>> creator =
+                doc-> Try.failure(new WebserviceException("wsExc"));
+
+        // WHEN
+        List<DocImmutableWith> failed = feedHandler8.handle(changes, creator);
+
+        // THEN
+        assertThat(failed.get(0).getType()).isEqualTo("IMPORTANT");
+        assertThat(failed.get(0).getApiId()).isEqualTo(0);
+        assertThat(failed.get(0).getStatus()).isEqualTo("FAILED");
+        assertThat(failed.get(0).getError()).isEqualTo("wsExc");
+
+        System.out.println(failed);
     }
 }
