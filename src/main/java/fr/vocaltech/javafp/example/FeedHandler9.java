@@ -9,6 +9,11 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class FeedHandler9 {
+    public interface Parameters {
+        default Predicate<DocImmutableWith> filter() { return DEFAULT_FILTER; }
+        default BiFunction<DocImmutableWith, Resource, DocImmutableWith> successMapper() { return DEFAULT_SUCCESS_MAPPER; }
+        default BiFunction<DocImmutableWith, Throwable, DocImmutableWith> failureMapper() { return DEFAULT_FAILURE_MAPPER; }
+    }
     private final Repository repository;
     private static final Predicate<DocImmutableWith> DEFAULT_FILTER = doc -> doc.getType().equals("IMPORTANT");
     private static final BiFunction<DocImmutableWith, Resource, DocImmutableWith> DEFAULT_SUCCESS_MAPPER = (doc, resource) ->
@@ -41,4 +46,9 @@ public class FeedHandler9 {
         return handle(changes, creator, DEFAULT_FILTER, DEFAULT_SUCCESS_MAPPER, DEFAULT_FAILURE_MAPPER);
     }
 
+    public List<DocImmutableWith> handle(List<DocImmutableWith> changes,
+                                         Function<DocImmutableWith, Try<Resource>> creator,
+                                         Parameters params) {
+        return handle(changes, creator, params.filter(), params.successMapper(), params.failureMapper());
+    }
 }
