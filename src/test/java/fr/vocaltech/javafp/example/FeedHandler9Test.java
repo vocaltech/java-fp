@@ -8,6 +8,7 @@ import org.mockito.MockitoAnnotations;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -25,7 +26,7 @@ class FeedHandler9Test {
         // init mocks
         MockitoAnnotations.openMocks(this);
 
-        // init feedHandler8
+        // init feedHandler9
         feedHandler9 = new FeedHandler9(mockedRepository);
 
         // create changes list
@@ -73,6 +74,44 @@ class FeedHandler9Test {
         assertThat(failed.get(0).getError()).isEqualTo("wsExc");
 
         System.out.println(failed);
+    }
+
+    @Test
+    void givenChangesAndSuccessCreatorAndCustomSuccessMapper_whenHandle_thenProcessed() {
+        // GIVEN
+        Resource resource = new Resource();
+        resource.put("id", 9);
+
+        Function<DocImmutableWith, Try<Resource>> creator =
+                doc -> Try.success(resource);
+
+        BiFunction<DocImmutableWith, Resource, DocImmutableWith> customSuccessMapper = (doc, res) ->
+                doc.withStatus("CUSTOM-PROCESSED")
+                        .withApiId(resource.get("id"));
+
+        // WHEN
+        FeedHandler9.Parameters params = new FeedHandler9.Parameters() {
+            @Override
+            public BiFunction<DocImmutableWith, Resource, DocImmutableWith> successMapper() {
+                return customSuccessMapper;
+            }
+        };
+
+        List<DocImmutableWith> customProcessed = feedHandler9.handle(changes, creator, params);
+
+        // THEN
+        assertThat(customProcessed.get(0).getType()).isEqualTo("IMPORTANT");
+        assertThat(customProcessed.get(0).getApiId()).isEqualTo(9);
+        assertThat(customProcessed.get(0).getStatus()).isEqualTo("CUSTOM-PROCESSED");
+        assertThat(customProcessed.get(0).getError()).isNull();
+
+        System.out.println(customProcessed);
+    }
+
+    // TODO
+    @Test
+    void givenChangesAndFailureCreatorAndCustomFailureMapper_whenHandle_thenFailed() {
+
     }
 
 }
